@@ -50,7 +50,7 @@ Produced by `python -m agentplatform.cli --embedded-pg eval --repeats 2` against
 
 | groundedness | citation F1 | task completion | tool success | instruction adherence | unsupported numbers | consistency | latency p50 / p95 |
 |---|---|---|---|---|---|---|---|
-| 1.000 | 0.882 | 0.967 | 1.000 | 1.000 | 0.000 | 1.000 | 5.3 / 10.5 ms |
+| 1.000 | 0.882 | 0.967 | 1.000 | 1.000 | 0.000 | 1.000 | 5.6 / 10.8 ms |
 
 **Read these honestly.** The offline provider is extractive, so groundedness is high by construction and consistency is 1.0 because it is deterministic. The informative numbers are retrieval-driven: citation F1 (0.88) and task completion (0.97, one required fact missing in `metric-count`). The dataset was used while developing the chunker/writer (three real defects were found and fixed this way), so treat these as development-set numbers, not a held-out benchmark. They say nothing about any language model's quality; run the suite with a real provider to get those numbers. Details: [`docs/EVALUATION.md`](docs/EVALUATION.md).
 

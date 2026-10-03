@@ -18,7 +18,7 @@
 **Regression gate**: no tracked metric may fall > 0.02 below `baselines/<provider>.json`; p95 latency has an absolute cap. A test deliberately breaks retrieval and asserts the gate fails.
 
 ## Current baseline (offline provider)
-groundedness 1.000 · citation F1 0.882 (precision 0.815, recall 1.0) · task completion 0.967 · tool success 1.0 · adherence 1.0 · unsupported numbers 0.0 · consistency 1.0 · p50 5.3 ms · p95 10.5 ms · 15 cases (14 complete; the injection case fails by design).
+groundedness 1.000 · citation F1 0.882 (precision 0.815, recall 1.0) · task completion 0.967 · tool success 1.0 · adherence 1.0 · unsupported numbers 0.0 · consistency 1.0 · p50 5.6 ms · p95 10.8 ms · 15 cases (14 complete; the injection case fails by design).
 
 ## What these numbers mean
 - The offline provider is deterministic and extractive: groundedness and consistency are near-ceiling **by construction**. Retrieval-dependent metrics (citation F1, task completion) are the real signal.
