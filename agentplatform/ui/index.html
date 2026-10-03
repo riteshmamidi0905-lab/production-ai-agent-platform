@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agent Platform · Operations</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230b0f14'/%3E%3Cpath d='M8 20l5-8 4 6 3-4 4 6' stroke='%2322d3a6' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/ui/app.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="logo" aria-hidden="true"></span><b>Agent Platform</b><span class="muted">operations &amp; evaluation</span></div>
+  <div class="pills" id="status" aria-live="polite"></div>
+</header>
+<div class="shell">
+  <aside class="side">
+    <form id="runForm" class="card" autocomplete="off">
+      <label for="query">Research request</label>
+      <textarea id="query" rows="4" maxlength="4000" placeholder="Ask a multi-part question about the indexed corpus…"></textarea>
+      <div class="chips" id="examples" aria-label="Example requests"></div>
+      <div class="row2">
+        <div><label for="provider">Provider</label><select id="provider"></select></div>
+        <div><label for="approval">Approvals</label><select id="approval"><option value="consequential">consequential only</option><option value="all_tools">every tool call</option><option value="none">none</option></select></div>
+      </div>
+      <div class="row2">
+        <div><label for="maxwords">Max words</label><input id="maxwords" type="number" min="20" max="2000" placeholder="no limit"></div>
+        <label class="check"><input id="saveReport" type="checkbox"> save report<br><small>consequential · needs approval</small></label>
+      </div>
+      <button class="primary" id="go" type="submit">Run agent</button>
+      <p class="err" id="formErr" role="alert"></p>
+    </form>
+    <div class="card">
+      <div class="cardhead"><h2>Recent runs</h2><button class="ghost" id="refreshRuns" type="button">refresh</button></div>
+      <ul class="runs" id="runs"></ul>
+    </div>
+  </aside>
+  <main class="main">
+    <nav class="tabs" role="tablist" aria-label="Views">
+      <button role="tab" aria-selected="true" data-tab="live">Live run</button>
+      <button role="tab" aria-selected="false" data-tab="eval">Evaluation</button>
+      <button role="tab" aria-selected="false" data-tab="knowledge">Knowledge</button>
+      <button role="tab" aria-selected="false" data-tab="system">Prompts &amp; tools</button>
+    </nav>
+
+    <section id="tab-live" class="tab">
+      <ol class="stepper" id="stepper" aria-label="Execution stages"></ol>
+      <div class="empty" id="liveEmpty"><h2>Watch the agent work</h2><p>Submit a request. Every state change, plan step, tool call, retrieved passage, approval, usage update and verification verdict streams here from the real execution.<br><span class="muted">Only structured execution events are shown — never hidden model reasoning.</span></p></div>
+      <div class="live" id="live" hidden>
+        <div class="col">
+          <article class="card" id="approvalCard" hidden><h2>Approval required</h2><div id="approvalBody"></div></article>
+          <article class="card"><h2>Plan</h2><p class="muted" id="planSummary">—</p><ol class="plan" id="plan"></ol></article>
+          <article class="card"><div class="cardhead"><h2>Tool calls</h2><span class="muted" id="toolSummary"></span></div><div class="tablewrap"><table id="tools"><thead><tr><th>tool</th><th>args</th><th>status</th><th>ms</th><th>tries</th></tr></thead><tbody></tbody></table></div></article>
+          <article class="card"><div class="cardhead"><h2>Evidence</h2><span class="muted" id="evSummary"></span></div><div id="evidence" class="evlist"></div></article>
+        </div>
+        <div class="col">
+          <article class="card meters" id="meters"></article>
+          <article class="card"><h2>Result</h2><div id="result" class="result"><p class="muted">Waiting for the report…</p></div><div id="verification"></div></article>
+          <article class="card"><div class="cardhead"><h2>Event stream</h2><label class="check inline"><input type="checkbox" id="rawToggle"> raw JSON</label></div><ol class="events" id="events"></ol></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-eval" class="tab" hidden>
+      <div class="card"><div class="cardhead"><h2>Automated evaluation</h2><div><label class="check inline">repeats <input type="number" id="repeats" min="1" max="5" value="2" style="width:56px"></label><button class="primary small" id="runEval" type="button">Run evaluation</button></div></div>
+        <p class="muted" id="evalNote">Runs the labelled dataset end-to-end through the real engine and scores recorded artefacts. Numbers below are measurements, not claims.</p></div>
+      <div id="evalDetail"></div>
+      <div class="card"><h2>History</h2><div class="tablewrap"><table id="evalList"><thead><tr><th>run</th><th>provider</th><th>groundedness</th><th>citation F1</th><th>task completion</th><th>tool success</th><th>p95 ms</th><th>gate</th></tr></thead><tbody></tbody></table></div></div>
+    </section>
+
+    <section id="tab-knowledge" class="tab" hidden>
+      <div class="card"><h2>Indexed documents</h2><div class="tablewrap"><table id="docs"><thead><tr><th>id</th><th>title</th><th>chunks</th></tr></thead><tbody></tbody></table></div></div>
+      <form class="card" id="docForm"><h2>Add a document</h2><div class="row2"><div><label for="docId">id</label><input id="docId" pattern="[A-Za-z0-9._-]{1,80}" required></div><div><label for="docTitle">title</label><input id="docTitle" required></div></div><label for="docText">markdown / text</label><textarea id="docText" rows="6" minlength="30" required></textarea><button class="primary small" type="submit">Index document</button><p class="muted" id="docMsg"></p></form>
+    </section>
+
+    <section id="tab-system" class="tab" hidden>
+      <div class="card"><h2>Tools (MCP-compatible registry)</h2><div class="tablewrap"><table id="toolList"><thead><tr><th>name</th><th>risk</th><th>description</th></tr></thead><tbody></tbody></table></div><p class="muted">Also served over MCP at <code>POST /mcp</code> (consequential tools are never exposed).</p></div>
+      <div class="card"><h2>Prompt versions</h2><div class="tablewrap"><table id="promptList"><thead><tr><th>prompt</th><th>version</th><th>hash</th><th>notes</th></tr></thead><tbody></tbody></table></div></div>
+    </section>
+  </main>
+</div>
+<script src="/ui/app.js" defer></script>
+</body>
+</html>

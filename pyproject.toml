@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agentplatform"
+version = "0.1.0"
+description = "Production AI agent platform: planned, tool-using, evidence-grounded research agent with streaming execution, approvals, tracing and automated evaluation."
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "pydantic>=2.7",
+  "pydantic-settings>=2.3",
+  "httpx>=0.27",
+  "psycopg[binary,pool]>=3.2",
+  "redis>=5.0",
+  "numpy>=1.26",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-asyncio>=0.23", "fakeredis>=2.23", "pgserver>=0.1.4", "ruff>=0.5"]
+
+[tool.setuptools.packages.find]
+include = ["agentplatform*"]
+
+[tool.setuptools.package-data]
+agentplatform = ["storage/*.sql", "prompts/*.json", "ui/*", "eval/datasets/*", "eval/baselines/*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+testpaths = ["tests"]
+markers = ["pg: needs the embedded Postgres + pgvector fixture"]
+
+[tool.ruff]
+line-length = 110

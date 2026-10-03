@@ -1,0 +1,21 @@
+{
+  "provider": "offline",
+  "dataset": "research_v1",
+  "metrics": {
+    "groundedness": 1.0,
+    "citation_f1": 0.8815,
+    "citation_precision": 0.8154,
+    "citation_recall": 1.0,
+    "task_completion": 0.9667,
+    "tool_success": 1.0,
+    "instruction_adherence": 1.0,
+    "hallucinated_number_rate": 0.0,
+    "consistency": 1.0,
+    "latency_p50_ms": 5.6,
+    "latency_p95_ms": 10.8,
+    "cases": 15,
+    "completed": 14,
+    "total_tokens": 33395,
+    "total_cost_usd": 0.0
+  }
+}
