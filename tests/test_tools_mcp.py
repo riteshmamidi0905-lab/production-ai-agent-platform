@@ -79,3 +79,31 @@ async def test_mcp_remote_tool_without_readonly_hint_is_consequential():
     from agentplatform.tools.mcp import MCPRemoteTool
     t = MCPRemoteTool(MCPClient("http://x", "x"), {"name": "delete_everything", "description": "d", "inputSchema": {}})
     assert t.risk.value == "consequential"
+
+
+def test_mcp_stdio_entrypoint_serves_readonly_tools(pg):
+    """`python -m agentplatform.mcp_stdio` (named in the README and in tools/mcp.py) exists and speaks JSON-RPC on stdio."""
+    import json
+    import os
+    import subprocess
+    import sys
+
+    msgs = [
+        {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}},
+        {"jsonrpc": "2.0", "id": 2, "method": "tools/list"},
+        {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "calculator", "arguments": {"expression": "2+3*4"}}},
+        {"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": "save_report", "arguments": {"title": "t", "content": "c"}}},
+    ]
+    r = subprocess.run(
+        [sys.executable, "-m", "agentplatform.mcp_stdio"],
+        input="\n".join(json.dumps(m) for m in msgs) + "\n",
+        capture_output=True, text=True, timeout=60,
+        env={**os.environ, "AP_DATABASE_URL": pg.get_uri()},
+    )
+    assert r.returncode == 0, r.stderr[-500:]
+    out = {m["id"]: m for m in map(json.loads, r.stdout.splitlines())}
+    assert out[1]["result"]["serverInfo"]["name"] == "agentplatform"
+    names = {t["name"] for t in out[2]["result"]["tools"]}
+    assert "calculator" in names and "save_report" not in names
+    assert "14" in out[3]["result"]["content"][0]["text"]
+    assert out[4]["error"]["code"] == -32602

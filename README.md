@@ -33,7 +33,7 @@ Then open `/`. Submit a request, tick “save report” to see a consequential t
 | API | FastAPI, async end to end; REST + **SSE** (`Last-Event-ID` resume) + **WebSocket**; optional API key |
 | Orchestration | Explicit validated state machine (`created→guarding→planning→executing→synthesizing→verifying→completed/failed/cancelled`); independent plan steps run **concurrently**, dependent ones wait |
 | Tools | Typed (Pydantic) args, risk classes (`read` / `network` / `consequential`), per-call timeout, bounded retries, metrics. Built-ins: `search_corpus`, `calculator` (AST, no `eval`), `fetch_url` (off by default, TLS + allow-list), `save_report` |
-| **MCP** | JSON-RPC 2.0 server at `POST /mcp` + stdio (`initialize`, `tools/list`, `tools/call`); consequential tools are *never* exposed. MCP **client** imports external servers' tools (anything without `readOnlyHint` is treated as consequential) |
+| **MCP** | JSON-RPC 2.0 server at `POST /mcp` + stdio (`python -m agentplatform.mcp_stdio`; `initialize`, `tools/list`, `tools/call`); consequential tools are *never* exposed. MCP **client** imports external servers' tools (anything without `readOnlyHint` is treated as consequential) |
 | Retrieval | Markdown-aware chunking → embeddings → **pgvector HNSW cosine** + **Postgres full-text (GIN)** in parallel → **Reciprocal Rank Fusion** → term-coverage rerank; per-passage vector / lexical / fused scores are surfaced |
 | State | PostgreSQL: runs, append-only events, traces, approvals, conversations, documents/chunks, eval history. Runs survive restarts as records; in-flight runs are marked `interrupted` at startup |
 | Redis | Optional: cross-worker event fan-out, approval decisions and retrieval cache; in-process fallback with the same interface |
@@ -52,11 +52,11 @@ Produced by `python -m agentplatform.cli --embedded-pg eval --repeats 2` against
 |---|---|---|---|---|---|---|---|
 | 1.000 | 0.882 | 0.967 | 1.000 | 1.000 | 0.000 | 1.000 | 5.6 / 10.8 ms |
 
-**Read these honestly.** The offline provider is extractive, so groundedness is high by construction and consistency is 1.0 because it is deterministic. The informative numbers are retrieval-driven: citation F1 (0.88) and task completion (0.97, one required fact missing in `metric-count`). The dataset was used while developing the chunker/writer (three real defects were found and fixed this way), so treat these as development-set numbers, not a held-out benchmark. They say nothing about any language model's quality; run the suite with a real provider to get those numbers. Details: [`docs/EVALUATION.md`](docs/EVALUATION.md).
+**Read these honestly.** The offline provider is extractive, so groundedness is high by construction and consistency is 1.0 because it is deterministic. The informative numbers are retrieval-driven: citation F1 (0.88) and task completion (0.97, one required fact missing in `metric-count`). The dataset was used while developing the chunker/writer (three real defects were found and fixed this way), so treat these as development-set numbers, not a held-out benchmark. They say nothing about any language model's quality; run the suite with a real provider to get those numbers. Latency is machine-dependent: a re-run in a slower sandbox gave 38.7 / 78.7 ms with every other metric identical and the gate passing. Details: [`docs/EVALUATION.md`](docs/EVALUATION.md).
 
 ## Tests
 
-`pytest -q` → 78 tests against **real PostgreSQL 16 + pgvector 0.6** (embedded via `pgserver`, no mocks for the DB), a real uvicorn server for SSE/WebSocket, fakeredis for the Redis path, and `httpx.MockTransport` for provider HTTP. Mutation-checked: disabling approvals, the verifier or retrieval fusion each turns the suite red. CI also runs the evaluation regression gate and a Docker Compose smoke test.
+`pytest -q` → 79 tests (78 originally; +1 for the stdio MCP entrypoint) against **real PostgreSQL 16 + pgvector 0.6** (embedded via `pgserver`, no mocks for the DB), a real uvicorn server for SSE/WebSocket, fakeredis for the Redis path, and `httpx.MockTransport` for provider HTTP. Mutation-checked: disabling approvals, the verifier or retrieval fusion each turns the suite red. CI also runs the evaluation regression gate and a Docker Compose smoke test.
 
 ## Docs
 [`ARCHITECTURE.md`](docs/ARCHITECTURE.md) (diagrams) · [`DESIGN_DECISIONS.md`](docs/DESIGN_DECISIONS.md) (trade-offs, scaling, interview Q&A) · [`EVALUATION.md`](docs/EVALUATION.md) · [`NEXT_PROJECTS.md`](docs/NEXT_PROJECTS.md) (voice agent, MAREF platform)
